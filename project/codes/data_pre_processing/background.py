@@ -9,7 +9,6 @@ class io():
     def readFile(self):
         return fits.open(self.name)
     
-    
     def getData(self):
         '''
         Returns:
@@ -81,7 +80,6 @@ def background_process(input_folder:str, output_folder:str):
                 background = np.zeros((2048, 1))
             counts = data.getData()[:, 1].reshape((2048, 1))
             background += counts
-            print(background.shape)
         
         else:
             if background_detection:
