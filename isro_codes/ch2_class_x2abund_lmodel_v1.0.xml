@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-model href="https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?><Product_Zipped xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1B00.xsd" xmlns="http://pds.nasa.gov/pds4/pds/v1">
+  <Identification_Area>
+    <logical_identifier>urn:isro:isda:ch2_cho.cla:miscellaneous:ch2_class_x2abund_lmodel</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>CLASS XRF Model</title>
+    <information_model_version>1.11.0.0</information_model_version>
+    <product_class>Product_Zipped</product_class>
+    <Modification_History>
+      <Modification_Detail>
+        <modification_date>2022-04-20</modification_date>
+        <version_id>1.0</version_id>
+        <description>First version</description>
+      </Modification_Detail>
+    </Modification_History>
+  </Identification_Area>
+  <Internal_Reference>
+      <lid_reference>urn:isro:isda:ch2_cho:context:inst_cla</lid_reference>
+      <reference_type>zip_to_package</reference_type>
+  </Internal_Reference>
+  <Zip>
+    <container_type>ZIP</container_type>
+    <description>Compressed zip file with CLASS Data Analysis Software</description>
+  </Zip>
+  <File>
+    <file_name>ch2_class_x2abund_lmodel_v1.0.zip</file_name>
+    <creation_date_time>2022-04-20T10:21:00</creation_date_time>
+    <file_size unit="byte">2021074</file_size>
+  </File>
+</Product_Zipped>
