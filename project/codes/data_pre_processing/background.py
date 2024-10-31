@@ -1,5 +1,4 @@
 import numpy as np
-from numba import njit
 from astropy.io import fits
 import os
 
@@ -9,6 +8,7 @@ class io():
     
     def readFile(self):
         return fits.open(self.name)
+    
     
     def getData(self):
         '''
@@ -29,8 +29,7 @@ class io():
         '''
         with self.readFile() as hdu:
             return hdu[1].header['SOLARANG']>90
-                
-
+        
 
 def background_process(input_folder:str, output_folder:str):
     """
@@ -68,49 +67,31 @@ def background_process(input_folder:str, output_folder:str):
     background_detection = False
     background = np.zeros((2048, 1))
     iters = 0
-
-    @njit
-    def background_numba(counts, is_background, background_detection, background, iters):
-        '''
-        Accelerates mathematical operations using Numba for improved algorithm performance.
-
-        Returns:
-            signal_detection: True if XRF is being recorded with pre-calculated background noise data, otherwise False
-            background: background noise data
-            iters: tracks the frequency of background noise examined
-            background_detection: True if background is being detected, otherwise False
-
-        '''
-        signal_detection = False
-        if is_background:
-                iters += 1
-                if not background_detection:
-                    background_detection = True
-                    background = np.zeros((2048, 1))
-                background += counts
-            
-        else:
-            if background_detection:
-                background_detection = False
-                # Doesnt process the XRF data without getting background noise
-                if iters == 0:
-                    return signal_detection, background, iters, background_detection
-                background /= iters
-                iters = 0
-                signal_detection = True
-        
-        return signal_detection, background, iters, background_detection
     
     for file in files:
         path = f"{input_folder}/{file}"
         data = io(path)
         hdr = data.readFile()
-        signal = data.getData()[:, 1].reshape((2048, 1))
         is_background = data.backgroundNoise()
 
-        signal_detection, background, iters, background_detection = background_numba(signal, is_background, background_detection, background, iters)
+        if is_background:
+            iters += 1
+            if not background_detection:
+                background_detection = True
+                background = np.zeros((2048, 1))
+            counts = data.getData()[:, 1].reshape((2048, 1))
+            background += counts
+            print(background.shape)
         
-        if signal_detection:
+        else:
+            if background_detection:
+                background_detection = False
+                # Doesnt process the XRF data without getting background noise
+                if iters == 0:
+                    continue
+                background /= iters
+                iters = 0
+            
             header = hdr[1].header
             # XRF_Signal contains both background noise and XRF data
             XRF_signal = data.getData()
