@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.io import fits
+from tqdm import tqdm
 import os
 
 class io():
@@ -30,72 +31,53 @@ class io():
             return hdu[1].header['SOLARANG']>90
         
 
-def background_process(input_folder:str, output_folder:str):
-    """
-    Processes X-ray fluorescence (XRF) data files in the specified folder, calculates 
-    background noise if detected, and saves the processed data as FITS files.
-
-    Parameters:
-    -----------
-    input_folder : str
-        Path to the folder containing the input data files
-    output_folder : str
-        Path to the folder where processed FITS files will be saved
-
-    Workflow:
-    ---------
-    1. Reads files from `input_folder` in reverse order(To prioritize background data before processing XRF data).
-    2. Checks each file for background noise. If background noise is detected:
-       - Accumulates the counts to calculate an average background signal.
-    3. For non-background files:
-       - If background noise has been detected in previous files, it averages 
-         the accumulated background.
-       - Writes the XRF signal and background noise to a FITS file with the original header.
-       - Saves the output FITS file in `output_folder` with a name format `filteredData_<filename>`.
-    4. The saved FITS files are structured as follows:
-        - Header of raw data in the header of Primary HDU
-        - XRF_Signal contains channels and counts
-        - background contains background noise calculated
-
-    Returns:
-    --------
-    None
-    """
-    files = [file for file in os.listdir(input_folder)][::-1]
-
-    background_detection = False
+def background_process(input_folder: str, output_folder: str, reverse:True):
+    files = sorted(os.listdir(input_folder), reverse=reverse)  # Reverse order for background-first processing
     background = np.zeros((2048, 1))
+    background_detection = False
     iters = 0
-    
-    for file in files:
-        path = f"{input_folder}/{file}"
+    folder_count = 0  # Folder counter for clusters of files sharing the same background
+
+    for file in tqdm(files):
+        path = os.path.join(input_folder, file)
         data = io(path)
         hdr = data.readFile()
-        is_background = data.backgroundNoise()
-
+        is_background = data.backgroundNoise()  # Detect if it's a background file
+        
         if is_background:
-            iters += 1
+            # Start or continue background accumulation
             if not background_detection:
                 background_detection = True
                 background = np.zeros((2048, 1))
+                iters = 0  # Reset counter for a new background cluster
+            
+            # Accumulate background counts
             counts = data.getData()[:, 1].reshape((2048, 1))
             background += counts
-        
-        else:
-            if background_detection:
-                background_detection = False
-                # Doesnt process the XRF data without getting background noise
-                if iters == 0:
-                    continue
-                background /= iters
-                iters = 0
+            iters += 1
             
-            header = hdr[1].header
-            # XRF_Signal contains both background noise and XRF data
+        else:
+            # Process XRF data only if background was detected previously
+            if background_detection and iters > 0:
+                # Compute average background once the cluster ends
+                background /= iters
+                background_detection = False  # Reset background detection for next cluster
+                folder_count += 1  # Update folder count for the next background cluster
+            
+            # Now process the XRF signal with computed background
+            if iters==0:
+                continue
+
             XRF_signal = data.getData()
+            header = hdr[1].header
+            
+            # Prepare HDUs for output FITS file
             hdu1 = fits.ImageHDU(XRF_signal, name='XRFSignal')
             hdu2 = fits.ImageHDU(background, name='BackgroundNoise')
-
             hdul = fits.HDUList([fits.PrimaryHDU(header=header), hdu1, hdu2])
-            output_path = f"{output_folder}/filteredData_{file}"
+            folder_path = f"{output_folder}/{folder_count}"
+            if not os.path.exists(folder_path):
+                os.mkdir(folder_path)
+            # Save FITS file to the current background folder
+            output_path = os.path.join(folder_path, f'filteredData_{file}')
             hdul.writeto(output_path, overwrite=True)
