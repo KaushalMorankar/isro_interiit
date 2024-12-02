@@ -32,7 +32,6 @@ extend({ MoonShaderMaterial });
 
 const Moon = ({ setLatLon }) => {
   const ref = useRef();
-  const [hovered, setHovered] = useState(false);
   const { raycaster } = useThree();
 
   React.useEffect(() => {
@@ -45,19 +44,18 @@ const Moon = ({ setLatLon }) => {
   const onPointerMove = (event) => {
     const intersects = raycaster.intersectObject(ref.current);
     if (intersects.length > 0) {
-      setHovered(true);
       const point = intersects[0].point;
 
-      // Convert to spherical coordinates
       const spherical = new THREE.Spherical();
       spherical.setFromVector3(point);
 
       const latitude = THREE.MathUtils.radToDeg(Math.PI / 2 - spherical.phi);
       const longitude = THREE.MathUtils.radToDeg(spherical.theta);
 
-      setLatLon({ latitude, longitude });
-    } else {
-      setHovered(false);
+      setLatLon((prev) => ({
+        ...prev,
+        hovered: { latitude, longitude },
+      }));
     }
   };
 
@@ -65,7 +63,12 @@ const Moon = ({ setLatLon }) => {
     <mesh
       ref={ref}
       onPointerMove={onPointerMove}
-      onPointerOut={() => setHovered(false)}
+      onPointerOut={() =>
+        setLatLon((prev) => ({
+          ...prev,
+          hovered: null,
+        }))
+      }
     >
       <sphereGeometry args={[1, 128, 128]} />
       <moonShaderMaterial />
@@ -74,7 +77,33 @@ const Moon = ({ setLatLon }) => {
 };
 
 const Page = () => {
-  const [latLon, setLatLon] = useState({ latitude: 0, longitude: 0 });
+  const [latLon, setLatLon] = useState({
+    hovered: null,
+    center: { latitude: 0, longitude: 0 },
+    zoomLevel: "medium",
+  });
+
+  const updateCenterAndZoom = (camera) => {
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(
+      camera.quaternion
+    );
+    const spherical = new THREE.Spherical();
+    spherical.setFromVector3(direction);
+
+    const latitude = THREE.MathUtils.radToDeg(Math.PI / 2 - spherical.phi);
+    const longitude = THREE.MathUtils.radToDeg(spherical.theta);
+
+    const distance = camera.position.length();
+    let zoomLevel = "medium";
+    if (distance < 1.2) zoomLevel = "close";
+    else if (distance > 1.5) zoomLevel = "far";
+
+    setLatLon((prev) => ({
+      ...prev,
+      center: { latitude, longitude },
+      zoomLevel,
+    }));
+  };
 
   return (
     <>
@@ -87,7 +116,10 @@ const Page = () => {
         <Suspense fallback={null}>
           <Moon setLatLon={setLatLon} />
         </Suspense>
-        <OrbitControls panSpeed={0.2} />
+        <OrbitControls
+          panSpeed={0.2}
+          onChange={(e) => updateCenterAndZoom(e.target.object)}
+        />
       </Canvas>
       <div
         style={{
@@ -100,8 +132,15 @@ const Page = () => {
           borderRadius: "5px",
         }}
       >
-        <div>Latitude: {latLon.latitude.toFixed(2)}</div>
-        <div>Longitude: {latLon.longitude.toFixed(2)}</div>
+        {latLon.hovered && (
+          <>
+            <div>Hovered Latitude: {latLon.hovered.latitude.toFixed(2)}</div>
+            <div>Hovered Longitude: {latLon.hovered.longitude.toFixed(2)}</div>
+          </>
+        )}
+        <div>Center Latitude: {latLon.center.latitude.toFixed(2)}</div>
+        <div>Center Longitude: {latLon.center.longitude.toFixed(2)}</div>
+        <div>Zoom Level: {latLon.zoomLevel}</div>
       </div>
     </>
   );
