@@ -69,9 +69,14 @@ def overlay_and_save(element, max_val, scale_factor, abundance_threshold):
         width, height = lunar_albedo.width, lunar_albedo.height
         transform = lunar_albedo.transform
 
-    fig = Figure(figsize=(width / 100, height / 100), dpi=100)
+    # Create an exact-sized figure without whitespace
+    fig = Figure(figsize=(width / 100, height / 100), dpi=100, tight_layout=False)
     canvas = FigureCanvas(fig)
-    ax = fig.add_subplot(111)
+    ax = fig.add_axes([0, 0, 1, 1])  # Full-extent axes, no margins
+    ax.set_xlim(0, width)
+    ax.set_ylim(height, 0)  # Flip Y-axis for proper image alignment
+    ax.axis('off')  # Turn off axis
+
     ax.imshow(albedo_image, cmap='gray', extent=(0, width, height, 0))
 
     cmap = plt.cm.jet
@@ -79,9 +84,6 @@ def overlay_and_save(element, max_val, scale_factor, abundance_threshold):
 
     patches = []
     for _, row in xrf_data.iterrows():
-        if row[['Lat1', 'Lat2', 'Lat3', 'Lat4']].max() > 81 or row[['Lat1', 'Lat2', 'Lat3', 'Lat4']].min() < -81:
-            continue
-
         corners = [
             latitude_longitude_to_pixel(row['Lat1'], row['Lon1'], width, height, lunar_extent),
             latitude_longitude_to_pixel(row['Lat2'], row['Lon2'], width, height, lunar_extent),
@@ -103,22 +105,25 @@ def overlay_and_save(element, max_val, scale_factor, abundance_threshold):
 
     p = PatchCollection(patches, match_original=True)
     ax.add_collection(p)
-    ax.axis('off')
 
     canvas.draw()
     combined_image = np.frombuffer(canvas.tostring_rgb(), dtype='uint8')
     combined_image = combined_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    # Ensure combined image matches input TIFF dimensions
+    combined_image = combined_image[:height, :width, :]
 
     # Save the overlay as a new TIFF file
     with rasterio.open(
         output_tiff_path,
         'w',
         driver='GTiff',
-        height=combined_image.shape[0],
-        width=combined_image.shape[1],
+        height=height,
+        width=width,
         count=3,
         dtype=combined_image.dtype,
-        transform=transform
+        transform=transform,
+        crs=meta['crs']
     ) as dst:
         for i in range(3):  # RGB channels
             dst.write(combined_image[:, :, i], i + 1)
