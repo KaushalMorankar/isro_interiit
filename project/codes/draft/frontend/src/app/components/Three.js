@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, Suspense } from "react";
+import React, { useRef, useEffect, Suspense, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, shaderMaterial } from "@react-three/drei";
 import { extend } from "@react-three/fiber";
@@ -32,13 +32,14 @@ const MoonShaderMaterial = shaderMaterial(
 
 extend({ MoonShaderMaterial });
 
-const Sphere = ({ tileUrl, setLatLon }) => {
+const Sphere = ({ tileUrl, setLatLon, setLoading }) => {
   const ref = useRef();
   const { raycaster } = useThree();
 
   useEffect(() => {
     const loader = new THREE.TextureLoader();
 
+    setLoading(true); // Start loading
     loader.load(
       `${tileUrl}0/0/0.jpg`,
       (texture) => {
@@ -46,15 +47,16 @@ const Sphere = ({ tileUrl, setLatLon }) => {
           ref.current.material.uniforms.textureMap.value = texture;
           console.log("Texture successfully loaded");
         }
+        setLoading(false); // Finish loading
       },
       undefined,
       (error) => {
         console.error("Failed to load texture:", error);
+        setLoading(false); // Finish loading even if there was an error
       }
     );
-  }, [tileUrl]); // Reload texture when tileUrl changes
+  }, [tileUrl, setLoading]); // Reload texture when tileUrl changes
 
-  // Pointer events remain unchanged
   const onPointerMove = (event) => {
     const intersects = raycaster.intersectObject(ref.current);
     if (intersects.length > 0) {
@@ -92,6 +94,7 @@ const Sphere = ({ tileUrl, setLatLon }) => {
 
 const ThreeJSMap = ({ tileUrl, setLatLon }) => {
   const mountRef = useRef();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -102,8 +105,69 @@ const ThreeJSMap = ({ tileUrl, setLatLon }) => {
   return (
     <div
       ref={mountRef}
-      style={{ width: "100%", height: "100vh", background: "black" }}
+      style={{
+        width: "100%",
+        height: "100vh",
+        background: "black",
+        position: "relative",
+      }}
     >
+      {loading && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10,
+            color: "white",
+            textAlign: "center",
+            border: "3px solid white",
+            borderRadius: "15px",
+            boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)",
+          }}
+        >
+          <img
+            src="https://media.giphy.com/media/RgzryV9nRCMHPVVXPV/giphy.gif?cid=790b7611zvyxf3c8z8z8ld9yneh6ma8n1r2msvnywocgsw5v&ep=v1_gifs_search&rid=giphy.gif&ct=g"
+            alt="loading"
+            style={{
+              width: "100px",
+              height: "100px",
+              marginBottom: "20px",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "2rem",
+              fontWeight: "bold",
+              marginBottom: "20px",
+            }}
+          >
+            Loading The Map...
+          </div>
+          <div
+            style={{
+              fontSize: "1.2rem",
+              marginBottom: "10px",
+              animation: "fade-in-out 3s infinite",
+            }}
+          >
+            <span
+              style={{
+                fontWeight: "bold",
+              }}
+            >
+              -
+            </span>{" "}
+          </div>
+        </div>
+      )}
       <Canvas
         camera={{ position: [0, 0, 5], fov: 50 }}
         style={{ height: "100vh", background: "black" }}
@@ -111,7 +175,11 @@ const ThreeJSMap = ({ tileUrl, setLatLon }) => {
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <Suspense fallback={null}>
-          <Sphere tileUrl={tileUrl} setLatLon={setLatLon} />
+          <Sphere
+            tileUrl={tileUrl}
+            setLatLon={setLatLon}
+            setLoading={setLoading}
+          />
         </Suspense>
         <OrbitControls
           zoomSpeed={0.3}

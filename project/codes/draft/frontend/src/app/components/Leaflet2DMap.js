@@ -58,13 +58,22 @@ const Leaflet2DMap = ({ tileUrl }) => {
     <div
       id="leaflet-container"
       style={{
-        height: "100vh",
-        width: "100vw",
+        height: "97vh",
+        width: "98vw",
+        overflow: "hidden",
         position: "relative",
-        zIndex: 0
+        zIndex: 0,
+        margin: "0 auto",
       }}
     >
-      <div id="map" style={{ height: "100%", width: "100%" }}></div>
+      <div
+        id="map"
+        style={{
+          height: "100%",
+          width: "100%",
+          overflow: "hidden",
+        }}
+      ></div>
     </div>
   );
 };

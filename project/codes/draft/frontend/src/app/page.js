@@ -5,9 +5,9 @@ import ThreeJSMap from "./components/Three";
 import Leaflet2DMap from "./components/Leaflet2DMap";
 
 const tileUrls = {
-  moon: "http://localhost:8000/tiles_output-simple-moon/",
-  mg: "http://localhost:8000/tiles_output_Mg_Si_intensity/",
-  al: "http://localhost:8000/tiles_output_Al_Si_intensity/",
+  moon: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/simple-moon/",
+  mg: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/Mg_Si_Intensity/",
+  al: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/Al_Si_Intensity/",
 };
 
 const Page = () => {
@@ -26,7 +26,13 @@ const Page = () => {
   };
 
   return (
-    <div>
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+      }}
+    >
       {currentMap === "threejs" ? (
         <ThreeJSMap tileUrl={tileUrls[selectedTile]} setLatLon={setLatLon} />
       ) : (
@@ -39,11 +45,17 @@ const Page = () => {
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
           gap: "10px",
           padding: "10px 20px",
           background: "rgba(0, 0, 0, 0.8)",
           borderRadius: "10px",
           boxShadow: "0 0 10px rgba(255, 255, 255, 0.5)",
+          overflow: "hidden",
+          maxWidth: "90%",
+          justifyContent: "center",
         }}
       >
         <select
@@ -53,6 +65,8 @@ const Page = () => {
             padding: "5px 10px",
             borderRadius: "5px",
             cursor: "pointer",
+            fontSize: "1rem",
+            maxWidth: "100%",
           }}
         >
           <option value="moon">Moon</option>
@@ -68,11 +82,22 @@ const Page = () => {
             background: "dodgerblue",
             color: "white",
             cursor: "pointer",
+            fontSize: "1rem",
+            maxWidth: "100%",
           }}
         >
           {currentMap === "threejs"
-            ? "Switch to Leaflet Map"
-            : "Switch to Three.js Map"}
+            ? "Switch to Subpixel Map"
+            : "Switch to 3D Map"}
+          <style>
+            {`
+      @media (max-width: 768px) {
+        button {
+          font-size: 0.7rem !important;
+        }
+      }
+    `}
+          </style>
         </button>
       </div>
     </div>
