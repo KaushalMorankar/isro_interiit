@@ -5,9 +5,9 @@ import ThreeJSMap from "./components/Three";
 import Leaflet2DMap from "./components/Leaflet2DMap";
 
 const tileUrls = {
-  moon: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/simple-moon/",
-  mg: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/Mg_Si_Intensity/",
-  al: "https://isro-s3.s3.ap-south-1.amazonaws.com/isro-s3/Al_Si_Intensity/",
+  moon: "http://localhost:8000/tiles_output-simple-moon/",
+  mg: "http://localhost:8000/tiles_output_Mg_Si_intensity/",
+  al: "http://localhost:8000/tiles_output_Al_Si_intensity/",
 };
 
 const Page = () => {
