@@ -38,6 +38,8 @@ const Page = () => {
       ) : (
         <Leaflet2DMap tileUrl={tileUrls[selectedTile]} />
       )}
+
+      {/* Controls */}
       <div
         style={{
           position: "absolute",
@@ -89,16 +91,28 @@ const Page = () => {
           {currentMap === "threejs"
             ? "Switch to Subpixel Map"
             : "Switch to 3D Map"}
-          <style>
-            {`
-      @media (max-width: 768px) {
-        button {
-          font-size: 0.7rem !important;
-        }
-      }
-    `}
-          </style>
         </button>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          bottom: 20,
+          left: 20,
+          padding: "7px",
+          backgroundColor: "black",
+          borderRadius: "5px",
+          boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+        }}
+      >
+        <img
+          src="scale.png"
+          alt="Colour Scale"
+          style={{
+            height: "500px",
+            width: "auto",
+          }}
+        />
       </div>
     </div>
   );
